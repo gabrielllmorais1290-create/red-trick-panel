@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>🎯 Red Trick Panel – Free Fire</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json"/>
+  <meta name="theme-color" content="#ff2222"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Red Trick"/>
+  <link rel="apple-touch-icon" href="./icon-192.png"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 40px;
+    }
+    header { text-align: center; padding: 16px 0 8px; }
+    header h1 { font-size: 1.6rem; color: #ff2222; text-shadow: 0 0 16px #ff2222aa; letter-spacing: 2px; }
+    header p { color: #aaa; font-size: 0.8rem; margin-top: 4px; }
+
+    /* Install banner */
+    #install-banner {
+      display: none;
+      background: #1a0000;
+      border: 1px solid #ff2222;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      align-items: center;
+      gap: 12px;
+    }
+    #install-banner span { flex: 1; font-size: 0.85rem; color: #ffaaaa; }
+    #install-banner button {
+      background: #ff2222; color: #fff; border: none;
+      border-radius: 8px; padding: 8px 16px; font-weight: 700; cursor: pointer;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    @media (min-width: 500px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+    .card {
+      background: #161616;
+      border: 1px solid #2a0000;
+      border-left: 4px solid #ff2222;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .card .label { font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .card .value { font-size: 1.7rem; font-weight: 700; color: #ff2222; text-shadow: 0 0 10px #ff222266; }
+    .card .unit { font-size: 0.75rem; color: #666; }
+
+    .section {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section h2 { font-size: 0.85rem; color: #ff4444; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .tab {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #888;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab.active { background: #ff2222; border-color: #ff2222; color: #fff; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    label { font-size: 0.72rem; color: #888; display: block; margin-bottom: 4px; }
+    input, textarea {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    input:focus, textarea:focus { border-color: #ff2222; outline: none; }
+    textarea { resize: vertical; min-height: 60px; }
+    .btn {
+      background: #ff2222;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 0;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn:active { background: #cc0000; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    th { color: #ff4444; text-align: left; padding: 6px 8px; border-bottom: 1px solid #2a0000; font-size: 0.7rem; }
+    td { padding: 8px; border-bottom: 1px solid #1a1a1a; color: #ccc; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    .badge-green { background: #0a2a0a; color: #4caf50; }
+    .badge-red { background: #2a0000; color: #ff4444; }
+
+    .stars { color: #ff2222; }
+    .star-off { color: #333; }
+
+    .progress-bar-bg { background: #1a1a1a; border-radius: 99px; height: 6px; margin-top: 3px; }
+    .progress-bar-fill { height: 6px; border-radius: 99px; background: linear-gradient(to right, #ff2222, #ff8800); }
+
+    #msg_salvo { color: #4caf50; text-align: center; margin-top: 8px; font-size: 0.9rem; display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎯 RED TRICK PANEL</h1>
+  <p>Free Fire · Gabriel</p>
+</header>
+
+<!-- Install Banner -->
+<div id="install-banner">
+  <span>📲 Instalar como app no celular</span>
+  <button id="install-btn">Instalar</button>
+</div>
+
+<!-- CARDS -->
+<div class="cards" id="cards"></div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('graficos')">📈 Gráficos</div>
+  <div class="tab" onclick="switchTab('registrar')">➕ Registrar</div>
+  <div class="tab" onclick="switchTab('historico')">📋 Histórico</div>
+</div>
+
+<!-- TAB: GRÁFICOS -->
+<div class="tab-content active" id="tab-graficos">
+  <div class="section">
+    <h2>📈 Headshot % por sessão</h2>
+    <canvas id="chartHS"></canvas>
+  </div>
+  <div class="section">
+    <h2>🔴 Red Shots & Kills</h2>
+    <canvas id="chartKills"></canvas>
+  </div>
+</div>
+
+<!-- TAB: REGISTRAR -->
+<div class="tab-content" id="tab-registrar">
+  <div class="section">
+    <h2>➕ Nova Sessão de Treino</h2>
+    <div class="form-row">
+      <div><label>Data</label><input type="date" id="f_data"/></div>
+      <div><label>Partidas</label><input type="number" id="f_partidas" min="1" placeholder="ex: 5"/></div>
+    </div>
+    <div class="form-row">
+      <div><label>Kills</label><input type="number" id="f_kills" min="0" placeholder="ex: 20"/></div>
+      <div><label>Headshots</label><input type="number" id="f_headshots" min="0" placeholder="ex: 10"/></div>
+    </div>
+    <div class="form-row">
+      <div><label>Red Shots</label><input type="number" id="f_redshots" min="0" placeholder="ex: 6"/></div>
+      <div><label>Precisão (%)</label><input type="number" id="f_precisao" min="0" max="100" placeholder="ex: 70"/></div>
+    </div>
+    <div class="form-row">
+      <div><label>Controle Recuo (1-5)</label><input type="number" id="f_recuo" min="1" max="5" placeholder="1 a 5"/></div>
+      <div><label>Grudar no Crânio (%)</label><input type="number" id="f_cranio" min="0" max="100" placeholder="ex: 45"/></div>
+    </div>
+    <div><label>Notas</label><textarea id="f_notas" placeholder="Como foi a sessão?"></textarea></div>
+    <button class="btn" onclick="salvarSessao()">💾 Salvar Sessão</button>
+    <div id="msg_salvo">✅ Sessão salva com sucesso!</div>
+  </div>
+</div>
+
+<!-- TAB: HISTÓRICO -->
+<div class="tab-content" id="tab-historico">
+  <div class="section">
+    <h2>📋 Histórico de Sessões</h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th><th>Kills</th><th>HS%</th><th>Red</th><th>Precisão</th><th>Recuo</th><th>Crânio</th>
+          </tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== STORAGE =====
+  function loadSessoes() {
+    try { return JSON.parse(localStorage.getItem('redtrick_sessoes') || '[]'); } catch { return []; }
+  }
+  function saveSessoes(s) { localStorage.setItem('redtrick_sessoes', JSON.stringify(s)); }
+
+  let sessoes = loadSessoes();
+
+  // Seed se vazio
+  if (!sessoes.length) {
+    sessoes = [
+      { data: "2026-06-01", partidas: 5, kills: 18, headshots: 7, red_shots: 4, precisao: 62, controle_recuo: 3, grudar_cranio: 39, notas: "Dia bom, hs melhorando" },
+      { data: "2026-06-02", partidas: 4, kills: 14, headshots: 5, red_shots: 3, precisao: 55, controle_recuo: 2, grudar_cranio: 36, notas: "Recuo difícil" },
+      { data: "2026-06-03", partidas: 6, kills: 22, headshots: 10, red_shots: 6, precisao: 70, controle_recuo: 4, grudar_cranio: 45, notas: "Melhor sessão até agora" },
+    ];
+    saveSessoes(sessoes);
+  }
+
+  // ===== TABS =====
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'graficos') renderCharts();
+  }
+
+  // ===== HELPERS =====
+  function hsPct(s) { return s.kills > 0 ? Math.round((s.headshots / s.kills) * 100) : 0; }
+  function stars(n) {
+    let s = '';
+    for (let i = 1; i <= 5; i++) s += `<span class="${i <= n ? 'stars' : 'star-off'}">★</span>`;
+    return s;
+  }
+
+  // ===== CARDS =====
+  function renderCards() {
+    if (!sessoes.length) return;
+    const totalKills = sessoes.reduce((a, s) => a + s.kills, 0);
+    const totalHS = sessoes.reduce((a, s) => a + s.headshots, 0);
+    const avgPrecisao = Math.round(sessoes.reduce((a, s) => a + s.precisao, 0) / sessoes.length);
+    const avgCranio = Math.round(sessoes.reduce((a, s) => a + s.grudar_cranio, 0) / sessoes.length);
+    const avgRecuo = (sessoes.reduce((a, s) => a + s.controle_recuo, 0) / sessoes.length).toFixed(1);
+    const hsGlobal = totalKills > 0 ? Math.round((totalHS / totalKills) * 100) : 0;
+
+    document.getElementById('cards').innerHTML = `
+      <div class="card"><div class="label">Kills</div><div class="value">${totalKills}</div></div>
+      <div class="card"><div class="label">Headshot %</div><div class="value">${hsGlobal}%</div></div>
+      <div class="card"><div class="label">Red Shots</div><div class="value">${sessoes.reduce((a, s) => a + s.red_shots, 0)}</div></div>
+      <div class="card"><div class="label">Precisão</div><div class="value">${avgPrecisao}%</div></div>
+      <div class="card"><div class="label">Crânio</div><div class="value">${avgCranio}%</div></div>
+      <div class="card"><div class="label">Recuo</div><div class="value">${avgRecuo}<span class="unit">/5</span></div></div>
+    `;
+  }
+
+  // ===== CHARTS =====
+  let chartHS, chartKills;
+  function renderCharts() {
+    const labels = sessoes.map(s => s.data.slice(5));
+    const hsData = sessoes.map(s => hsPct(s));
+    const kills = sessoes.map(s => s.kills);
+    const reds = sessoes.map(s => s.red_shots);
+
+    if (chartHS) chartHS.destroy();
+    if (chartKills) chartKills.destroy();
+
+    chartHS = new Chart(document.getElementById('chartHS'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ label: 'HS %', data: hsData, borderColor: '#ff2222', backgroundColor: 'rgba(255,34,34,0.15)', fill: true, tension: 0.4, pointBackgroundColor: '#ff2222' }]
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#aaa' } } },
+        scales: {
+          x: { ticks: { color: '#666' }, grid: { color: '#1a1a1a' } },
+          y: { ticks: { color: '#666' }, grid: { color: '#1a1a1a' }, min: 0, max: 100 }
+        }
+      }
+    });
+
+    chartKills = new Chart(document.getElementById('chartKills'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Kills', data: kills, backgroundColor: '#ff4444bb' },
+          { label: 'Red Shots', data: reds, backgroundColor: '#ff880088' },
+        ]
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#aaa' } } },
+        scales: {
+          x: { ticks: { color: '#666' }, grid: { color: '#1a1a1a' } },
+          y: { ticks: { color: '#666' }, grid: { color: '#1a1a1a' } }
+        }
+      }
+    });
+  }
+
+  // ===== TABELA =====
+  function renderTabela() {
+    document.getElementById('tabela').innerHTML = [...sessoes].reverse().map(s => `
+      <tr>
+        <td>${s.data.slice(5)}</td>
+        <td>${s.kills}</td>
+        <td><span class="badge ${hsPct(s) >= 45 ? 'badge-green' : 'badge-red'}">${hsPct(s)}%</span></td>
+        <td>${s.red_shots}</td>
+        <td>
+          ${s.precisao}%
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${s.precisao}%"></div></div>
+        </td>
+        <td>${stars(s.controle_recuo)}</td>
+        <td>
+          ${s.grudar_cranio}%
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${s.grudar_cranio}%"></div></div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ===== SALVAR =====
+  function salvarSessao() {
+    const nova = {
+      data: document.getElementById('f_data').value || new Date().toISOString().slice(0,10),
+      partidas: +document.getElementById('f_partidas').value || 0,
+      kills: +document.getElementById('f_kills').value || 0,
+      headshots: +document.getElementById('f_headshots').value || 0,
+      red_shots: +document.getElementById('f_redshots').value || 0,
+      precisao: +document.getElementById('f_precisao').value || 0,
+      controle_recuo: Math.min(5, Math.max(1, +document.getElementById('f_recuo').value || 1)),
+      grudar_cranio: +document.getElementById('f_cranio').value || 0,
+      notas: document.getElementById('f_notas').value || '',
+    };
+    sessoes.push(nova);
+    saveSessoes(sessoes);
+    renderCards();
+    renderTabela();
+
+    ['f_data','f_partidas','f_kills','f_headshots','f_redshots','f_precisao','f_recuo','f_cranio','f_notas']
+      .forEach(id => document.getElementById(id).value = '');
+
+    const msg = document.getElementById('msg_salvo');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 2500);
+  }
+
+  // ===== PWA INSTALL =====
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-banner').style.display = 'flex';
+  });
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('install-banner').style.display = 'none';
+  });
+
+  // ===== SERVICE WORKER =====
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
+  // ===== INIT =====
+  renderCards();
+  renderCharts();
+  renderTabela();
+
+  // Set today as default date
+  document.getElementById('f_data').value = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
